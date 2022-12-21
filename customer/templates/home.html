@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <style>
+        .b {
+            border-style: solid;
+            border-width: 1px;
+        }
+    </style>
+
+<h2>Welcome to My Recharge.</h2>
+
+<form>
+    {% csrf_token %}
+    <label for="mobile">Enter your mobile number:</label><br>
+    <input type="number" id="mobile" name="mobile" placeholder="number" {%if num %} value="{{num}}" {%endif%} required><br>
+    <b><span id="error" style="color: red;font-size: small;"></span></b>
+    {%if result == 1 %}
+    <span style="color: green;font-size: large;"><b>Recharge Successfull</b></span><br>
+    <p>
+        <b>Detail of recharge.</b><br>
+        {{num}}<br>
+        {{amt}}<br>
+        {{det}}<br>
+    </p>
+    {%elif result == 0%}
+    <span style="color: red;"><b>Recharge Failed</b></span>
+    {%endif%}
+</form><br>
+<button onclick="myfun()">Get Recharge List</button>
+<button onclick="history()">Show Recharge History</button><br><br>
+
+<div id="list">
+
+</div>
+
+
+<script>
+    function myfun(){
+        
+        document.getElementById('list').innerHTML="";
+
+        fetch("http://127.0.0.1:8000/api/recharge-list")
+            .then(res => {
+                return res.json();
+            }).then(data => {
+                data.forEach(element => {
+                    const result = `
+                        <div class="b">
+                            <p>
+                                <b><span style="color:red;">${element.amount} rupees</span> | ${element.title}</b>
+                                
+                                <button onclick="recharge(${element.id})">Recharge</button>
+                            </p>
+                            ${element.detail}   
+                        </div><br>
+                    `;
+                    
+                    document.getElementById('list').insertAdjacentHTML('beforeend',result)
+                });
+            })
+        
+        
+    }
+
+    function recharge(id){
+        let num = document.getElementsByName("mobile")[0].value;
+        if (String(num).length==10){
+            window.location.href = "/recharge/"+id+"/"+num
+        }
+        else{
+            document.getElementById('error').innerHTML='*invalid'
+        }
+    }
+
+    function history(){
+
+        document.getElementById('list').innerHTML="";
+        let num = document.getElementsByName("mobile")[0].value;
+
+        if (String(num).length==10){
+            fetch("http://127.0.0.1:8000/api/history/"+num)
+                .then(res => {return res.json()})
+                .then(data => {
+                    data.forEach(element => {
+                        const result = `
+                            <div class="b">
+                                <p>
+                                    <b><span style="color:red;">${element.ammount} rupees</span> | ${element.title}</b>
+                                    
+                                    <button onclick="recharge(${element.id})">Repeat Recharge</button><br>
+                                    <span style="font-size:small;">${element.recharge_date}</span>
+                                </p>
+                                ${element.detail}   
+                            </div><br>
+                        `;
+                        
+                        document.getElementById('list').insertAdjacentHTML('beforeend',result)
+                    });
+                });
+        }
+        else{
+            document.getElementById('error').innerHTML='*invalid'
+        }
+    }
+
+</script>
+
+
+</body>
+</html>
